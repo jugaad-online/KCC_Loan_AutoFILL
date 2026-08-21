@@ -368,7 +368,32 @@
       border-color: #6b3fa0;
     }
 
-    .toast {
+    .gen-mode {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem 1rem;
+      align-items: center;
+      padding: 0.65rem 0.85rem;
+      margin: 0.5rem 0 0.85rem;
+      background: #f0f4f8;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 0.86rem;
+    }
+    .gen-mode strong { margin-right: 0.25rem; }
+    .gen-mode label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .gen-mode .hint {
+      width: 100%;
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin: 0;
+    }
       position: fixed;
       bottom: 1.2rem;
       right: 1.2rem;
@@ -449,11 +474,13 @@
       <div class="sub">Enter data → forms auto-fill live</div>
 
       <div class="dl-box">
-        <p>Upload Excel ALL sheet → generate Word docs ZIP.</p>
+        <p>Upload Excel ALL sheet → generate docs ZIP.</p>
         <input type="file" id="excel-upload" accept=".xlsx,.xls" hidden />
+        <input type="file" id="docx-upload" accept=".docx" multiple hidden />
         <button type="button" class="btn btn-primary" id="btn-upload-xlsx">Upload Excel (ALL)</button>
-        <button type="button" class="btn btn-ghost" id="btn-gen-docs">Generate from HTML (ZIP)</button>
+        <button type="button" class="btn btn-ghost" id="btn-gen-docs">Generate ZIP</button>
         <button type="button" class="btn btn-ghost" id="btn-dl-xlsx">Download Excel</button>
+        <button type="button" class="btn btn-ghost" id="btn-load-docx">Load Word templates</button>
         <button type="button" class="btn btn-ghost" id="btn-clear">Clear all data</button>
       </div>
 
@@ -496,12 +523,18 @@
       <!-- LIVE PREVIEW -->
       <section class="panel" id="panel-preview">
         <h2><span class="pill preview">Live</span> Form Preview</h2>
-        <p class="lead">Preview is converted from the real Word forms (same layout/tables/text). Filled values update live from Data Entry.</p>
+        <p class="lead">On-screen preview is always from HTML (converted from your Word forms). Choose below whether <strong>Generate</strong> fills HTML or real <strong>.docx</strong> templates.</p>
+        <div class="gen-mode" id="gen-mode-preview">
+          <strong>Generate as:</strong>
+          <label><input type="radio" name="gen-mode" value="html" checked /> HTML (.doc)</label>
+          <label><input type="radio" name="gen-mode" value="docx" /> Word templates (.docx)</label>
+          <p class="hint" id="gen-mode-hint">HTML = quick preview download. Word = fills your real A1 / PSVR / Sanction .docx files.</p>
+        </div>
         <div class="toolbar">
           <label>Record</label>
           <select id="preview-record-select"></select>
-          <button type="button" class="btn btn-secondary btn-sm" id="btn-print-exact">Print exact</button>
-          <button type="button" class="btn btn-primary btn-sm" id="btn-gen-one">Generate from HTML (.doc)</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-print-exact">Print preview</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-gen-one">Generate current form</button>
         </div>
         <div class="preview-tabs" id="preview-tabs"></div>
         <div id="preview-body"></div>
@@ -509,22 +542,20 @@
 
       <!-- GENERATE -->
       <section class="panel" id="panel-generate">
-        <h2>Generate documents from HTML</h2>
-        <p class="lead">
-          Creates <strong>.doc</strong> files from the same HTML as Live Form Preview (A4 pages, filled fields).
-          Open in Microsoft Word. For the original bank <strong>.docx</strong> templates, use the bat file below.
-        </p>
-        <div class="banner info" style="margin-bottom:1rem">
-          <strong>Optional: exact .docx from Word templates</strong><br>
-          1. Download Excel (ALL sheet)<br>
-          2. Run <code>Generate_Exact_Docs.bat</code> in FORMS<br>
-          3. Open the <code>Generated</code> folder
+        <h2>Generate documents</h2>
+        <p class="lead">Pick <strong>HTML</strong> or <strong>Word (.docx)</strong>, then generate for one borrower or all records.</p>
+        <div class="gen-mode">
+          <strong>Generate as:</strong>
+          <label><input type="radio" name="gen-mode" value="html" /> HTML (.doc from preview)</label>
+          <label><input type="radio" name="gen-mode" value="docx" /> Word templates (.docx)</label>
+          <p class="hint">Word mode needs the .docx files next to this page (GitHub upload / same folder), or click <em>Load Word templates</em>.</p>
         </div>
         <div class="toolbar">
           <button type="button" class="btn btn-primary btn-sm" id="btn-upload-xlsx-2">Upload Excel (ALL)</button>
           <button type="button" class="btn btn-secondary btn-sm" id="btn-dl-xlsx-gen">Download Excel</button>
-          <button type="button" class="btn btn-primary btn-sm" id="btn-gen-docs-2">Generate from HTML · all records</button>
-          <button type="button" class="btn btn-secondary btn-sm" id="btn-gen-current">Generate from HTML · current record</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-gen-docs-2">Generate · all records</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-gen-current">Generate · current record</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-load-docx-2">Load Word templates</button>
         </div>
         <div id="generate-status" class="lead" style="margin-top:0.5rem"></div>
         <div class="sheet-scroll" style="margin-top:1rem">
@@ -599,21 +630,24 @@
     const WIDE = new Set(["BorrowerAddress", "SecuritiesDetails", "SchemeName", "AlliedActivities", "AdverseFeatures", "InspectingOfficial"]);
 
     const PREVIEWS = [
-      { id: "a1", label: "A1 (DPN)" },
-      { id: "a21a", label: "A21A" },
-      { id: "a3", label: "A3" },
-      { id: "a47", label: "A47" },
-      { id: "agri", label: "Agri A-1" },
-      { id: "sanction", label: "Sanction Letter" },
-      { id: "psld", label: "PSLD-1" },
-      { id: "psvr", label: "PSVR Agri" },
-      { id: "s14", label: "S14" }
+      { id: "a1", label: "A1 (DPN)", file: "A1.docx", out: "A1.docx" },
+      { id: "a21a", label: "A21A", file: "A21A.docx", out: "A21A.docx" },
+      { id: "a3", label: "A3", file: "A3.docx", out: "A3.docx" },
+      { id: "a47", label: "A47", file: "A47.docx", out: "A47.docx" },
+      { id: "agri", label: "Agri A-1", file: "Agri revised A-1.docx", out: "Agri_revised_A-1.docx" },
+      { id: "sanction", label: "Sanction Letter", file: "KCC Sanction Letter.docx", out: "KCC_Sanction_Letter.docx" },
+      { id: "psld", label: "PSLD-1", file: "PSLD-1.docx", out: "PSLD-1.docx" },
+      { id: "psvr", label: "PSVR Agri", file: "PSVR Agri.docx", out: "PSVR_Agri.docx" },
+      { id: "s14", label: "S14", file: "S14 - Acknowledgement of Debt & Security..docx", out: "S14_Acknowledgement.docx" }
     ];
+
+    const templateCache = new Map(); // filename -> ArrayBuffer
 
     let state = {
       records: [emptyRecord()],
       current: 0,
-      previewForm: "a1"
+      previewForm: "a1",
+      genMode: "html"
     };
 
     function emptyRecord() {
@@ -1280,12 +1314,110 @@ p{margin:0 0 4px;text-align:justify;}
     }
 
     // ----- Generate Word docs ZIP -----
-    async function generateDocsZip(records, zipName) {
-      if (!assertRecordsComplete(records)) return;
-      if (typeof JSZip === "undefined") {
-        showToast("JSZip not loaded — check internet/CDN");
-        return;
+    function getGenerateMode() {
+      const el = document.querySelector('input[name="gen-mode"]:checked');
+      return (el && el.value) || state.genMode || "html";
+    }
+
+    function syncGenModeRadios(mode) {
+      state.genMode = mode;
+      document.querySelectorAll('input[name="gen-mode"]').forEach((r) => {
+        r.checked = r.value === mode;
+      });
+      const one = document.getElementById("btn-gen-one");
+      if (one) one.textContent = mode === "docx" ? "Generate current form (.docx)" : "Generate current form (.doc)";
+    }
+
+    function escapeXml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function fieldValueForDoc(field, rec) {
+      let val = v(field, rec);
+      if (field === "AmountFigures" && !val) {
+        val = v("CropLoanAmount", rec) || v("CashCreditAmount", rec) || v("SanctionedLimit", rec) || "";
       }
+      return val || "";
+    }
+
+    function fillDocxXml(xml, rec) {
+      let out = xml;
+      [...ALL_COLS].sort((a, b) => b.length - a.length).forEach((field) => {
+        const val = escapeXml(fieldValueForDoc(field, rec));
+        const enc = `&lt;&lt;${field}&gt;&gt;`;
+        const raw = `<<${field}>>`;
+        if (out.includes(enc)) out = out.split(enc).join(val);
+        if (out.includes(raw)) out = out.split(raw).join(val);
+      });
+      return out;
+    }
+
+    async function loadTemplateBytes(fileName) {
+      if (templateCache.has(fileName)) return templateCache.get(fileName);
+      const res = await fetch(encodeURI(fileName));
+      if (!res.ok) {
+        throw new Error(
+          `Cannot load "${fileName}". Put Word templates next to this HTML (GitHub root), or click Load Word templates.`
+        );
+      }
+      const buf = await res.arrayBuffer();
+      templateCache.set(fileName, buf);
+      return buf;
+    }
+
+    async function fillDocxBlob(fileName, rec) {
+      const buf = await loadTemplateBytes(fileName);
+      const zip = await JSZip.loadAsync(buf.slice(0));
+      const jobs = [];
+      zip.forEach((path, entry) => {
+        if (entry.dir) return;
+        if (!/^word\/[^/]+\.xml$/i.test(path) && !/^word\/(header|footer|footnotes|endnotes)/i.test(path)) return;
+        if (!path.endsWith(".xml") || path.includes("_rels")) return;
+        jobs.push(
+          entry.async("string").then((xml) => {
+            if (xml.includes("&lt;&lt;") || xml.includes("<<")) {
+              zip.file(path, fillDocxXml(xml, rec));
+            }
+          })
+        );
+      });
+      await Promise.all(jobs);
+      return zip.generateAsync({
+        type: "blob",
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      });
+    }
+
+    function cacheUploadedDocxFiles(fileList) {
+      const files = Array.from(fileList || []);
+      if (!files.length) return;
+      let n = 0;
+      files.forEach((f) => {
+        if (!/\.docx$/i.test(f.name)) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          templateCache.set(f.name, reader.result);
+          // also map if casing/spacing differs
+          PREVIEWS.forEach((p) => {
+            if (p.file.toLowerCase() === f.name.toLowerCase()) {
+              templateCache.set(p.file, reader.result);
+            }
+          });
+          n++;
+          if (n === files.filter((x) => /\.docx$/i.test(x.name)).length) {
+            showToast(`Loaded ${n} Word template(s)`);
+            setGenerateStatus(`Word templates in memory: ${templateCache.size} file(s)`);
+          }
+        };
+        reader.readAsArrayBuffer(f);
+      });
+    }
+
+    async function generateHtmlZip(records, zipName) {
       const zip = new JSZip();
       records.forEach((rec, i) => {
         const folder = `${String(i + 1).padStart(3, "0")}_${safeFilePart(rec.BorrowerName || "Borrower")}`;
@@ -1296,8 +1428,71 @@ p{margin:0 0 4px;text-align:justify;}
       });
       const blob = await zip.generateAsync({ type: "blob" });
       downloadBlob(blob, zipName);
-      showToast(`Generated ${records.length * PREVIEWS.length} docs`);
-      setGenerateStatus(`Downloaded ${zipName} (${records.length} borrowers × ${PREVIEWS.length} forms)`);
+      showToast(`Generated HTML .doc × ${records.length * PREVIEWS.length}`);
+      setGenerateStatus(`Downloaded ${zipName} (HTML mode · ${records.length} borrowers × ${PREVIEWS.length} forms)`);
+    }
+
+    async function generateDocxZip(records, zipName) {
+      const zip = new JSZip();
+      let ok = 0;
+      for (let i = 0; i < records.length; i++) {
+        const rec = records[i];
+        const folder = `${String(i + 1).padStart(3, "0")}_${safeFilePart(rec.BorrowerName || "Borrower")}`;
+        for (const p of PREVIEWS) {
+          try {
+            const blob = await fillDocxBlob(p.file, rec);
+            zip.file(`${folder}/${p.out}`, blob);
+            ok++;
+          } catch (err) {
+            console.error(p.file, err);
+            throw err;
+          }
+        }
+      }
+      const out = await zip.generateAsync({ type: "blob" });
+      downloadBlob(out, zipName.replace(/\.zip$/i, "") + "_docx.zip");
+      showToast(`Generated Word .docx × ${ok}`);
+      setGenerateStatus(`Downloaded Word templates ZIP (${records.length} borrowers × ${PREVIEWS.length} forms)`);
+    }
+
+    async function generateDocsZip(records, zipName) {
+      if (!assertRecordsComplete(records)) return;
+      if (typeof JSZip === "undefined") {
+        showToast("JSZip not loaded — check internet/CDN");
+        return;
+      }
+      const mode = getGenerateMode();
+      try {
+        if (mode === "docx") await generateDocxZip(records, zipName);
+        else await generateHtmlZip(records, zipName);
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || "Generate failed");
+        setGenerateStatus(err.message || "Generate failed");
+      }
+    }
+
+    async function generateOneCurrent() {
+      if (!assertRecordsComplete([currentRecord()])) return;
+      const rec = currentRecord();
+      const p = PREVIEWS.find((x) => x.id === state.previewForm) || PREVIEWS[0];
+      const mode = getGenerateMode();
+      try {
+        if (mode === "docx") {
+          if (typeof JSZip === "undefined") throw new Error("JSZip not loaded");
+          const blob = await fillDocxBlob(p.file, rec);
+          downloadBlob(blob, `${p.out.replace(/\.docx$/i, "")}_${safeFilePart(rec.BorrowerName)}.docx`);
+          showToast("Generated Word .docx");
+        } else {
+          const html = toWordHtml(p.label, buildPaginatedPreviewHtml(p.id, rec));
+          const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+          downloadBlob(blob, `${p.id.toUpperCase()}_${safeFilePart(rec.BorrowerName)}_from_html.doc`);
+          showToast("Generated from HTML (.doc)");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || "Generate failed");
+      }
     }
 
     // ----- Excel -----
@@ -1447,14 +1642,25 @@ p{margin:0 0 4px;text-align:justify;}
       await generateDocsZip([currentRecord()], `KCC_Docs_${name}.zip`);
     });
     document.getElementById("btn-gen-one").addEventListener("click", () => {
-      if (!assertRecordsComplete([currentRecord()])) return;
-      const rec = currentRecord();
-      const p = PREVIEWS.find((x) => x.id === state.previewForm) || PREVIEWS[0];
-      const html = toWordHtml(p.label, buildPaginatedPreviewHtml(p.id, rec));
-      const blob = new Blob(["\ufeff", html], { type: "application/msword" });
-      downloadBlob(blob, `${p.id.toUpperCase()}_${safeFilePart(rec.BorrowerName)}_from_html.doc`);
-      showToast("Generated from HTML (.doc)");
+      generateOneCurrent();
     });
+
+    document.querySelectorAll('input[name="gen-mode"]').forEach((r) => {
+      r.addEventListener("change", () => {
+        if (r.checked) syncGenModeRadios(r.value);
+      });
+    });
+
+    function triggerDocxUpload() {
+      document.getElementById("docx-upload").click();
+    }
+    document.getElementById("docx-upload").addEventListener("change", (e) => {
+      cacheUploadedDocxFiles(e.target.files);
+      e.target.value = "";
+    });
+    document.getElementById("btn-load-docx").addEventListener("click", triggerDocxUpload);
+    const loadDocx2 = document.getElementById("btn-load-docx-2");
+    if (loadDocx2) loadDocx2.addEventListener("click", triggerDocxUpload);
 
     document.getElementById("btn-print-exact").addEventListener("click", () => {
       showPanel("preview");
@@ -1475,6 +1681,7 @@ p{margin:0 0 4px;text-align:justify;}
 
     // init
     load();
+    syncGenModeRadios(state.genMode || "html");
     renderEntryGrid();
     renderSheets();
     renderPreview();

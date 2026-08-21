@@ -7,48 +7,35 @@ Upload **everything in this folder** to the **root** of your GitHub repo
 
 https://jugaad-online.github.io/KCC_Loan_AutoFILL/MailMerge_Field_Names.html
 
-Or open the site root (redirects to the app):  
-https://jugaad-online.github.io/KCC_Loan_AutoFILL/
-
-## App files (required for github.io preview)
+## App files (required for preview)
 
 | File | Why |
 |------|-----|
-| `MailMerge_Field_Names.html` | Main app |
+| `MailMerge_Field_Names.html` | Main app — choose **HTML** or **Word (.docx)** generate |
 | `forms_preview_content.js` | **Required for Live Form Preview** |
-| `index.html` | Opens the app from the Pages home URL |
-| `KCC_Demo_50_Samples.xlsx` | 50 sample KCC rows — **Upload Excel (ALL)** |
-| `MailMerge_DIY_Fields.xlsx` | Excel template with correct headers |
+| `index.html` | Redirects Pages home → app |
+| `KCC_Demo_50_Samples.xlsx` | Demo Excel (Upload Excel ALL) |
+| `MailMerge_DIY_Fields.xlsx` | Excel template |
 | `README.md` | This file |
 
-## Word form templates (your docs)
+## Word form templates (required for Word generate mode)
 
-Tagged mail-merge `.docx` forms (download from the repo anytime):
-
-- `A1.docx`
-- `A21A.docx`
-- `A3.docx`
-- `A47.docx`
-- `Agri revised A-1.docx`
-- `KCC Sanction Letter.docx`
-- `PSLD-1.docx`
-- `PSVR Agri.docx`
+- `A1.docx`, `A21A.docx`, `A3.docx`, `A47.docx`
+- `Agri revised A-1.docx`, `KCC Sanction Letter.docx`
+- `PSLD-1.docx`, `PSVR Agri.docx`
 - `S14 - Acknowledgement of Debt & Security..docx`
 
-These are for reference / local exact generation. The online app preview uses `forms_preview_content.js` (built from these forms).
+On github.io these load automatically. If you open HTML as a local `file://` page, use **Load Word templates** in the app.
 
-## How to upload
+## Generate modes
 
-1. Open repo: https://github.com/jugaad-online/KCC_Loan_AutoFILL  
-2. Upload or push **all files from this `GITHUB` folder** to the **repo root** (not a subfolder).  
-3. Wait 1–2 minutes for Pages to refresh.  
-4. Hard-refresh the live URL (Ctrl+F5).
+| Mode | Output |
+|------|--------|
+| **HTML (.doc)** | Filled preview HTML (opens in Word) |
+| **Word templates (.docx)** | Fills `<<FieldName>>` in your real bank forms |
 
-## Check that preview works
+## Upload steps
 
-DevTools → Network: `forms_preview_content.js` → **200 OK** (not 404).
-
-## Notes
-
-- Excel / ZIP features need internet (SheetJS + JSZip CDNs).
-- Exact `.docx` fill (`Generate_Exact_Docs.bat`) stays on your PC in the main `FORMS` folder.
+1. Push/upload **all files in this folder** to the **repo root**.
+2. Wait for Pages to refresh; hard-refresh (Ctrl+F5).
+3. Confirm `forms_preview_content.js` returns **200** (not 404).
