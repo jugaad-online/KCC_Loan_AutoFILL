@@ -394,6 +394,7 @@
       font-size: 0.78rem;
       margin: 0;
     }
+    .toast {
       position: fixed;
       bottom: 1.2rem;
       right: 1.2rem;
@@ -408,6 +409,43 @@
       z-index: 50;
     }
     .toast.show { opacity: 1; }
+
+    .fab {
+      position: fixed;
+      right: 1.35rem;
+      bottom: 1.35rem;
+      z-index: 40;
+      display: none;
+      align-items: center;
+      gap: 0.45rem;
+      border: none;
+      border-radius: 999px;
+      padding: 0.9rem 1.35rem;
+      font-family: inherit;
+      font-size: 0.98rem;
+      font-weight: 650;
+      letter-spacing: 0.01em;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(16, 32, 51, 0.28);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .fab:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(16, 32, 51, 0.35);
+    }
+    .fab:active { transform: translateY(0); }
+    .fab-preview { background: #6b3fa0; }
+    .fab-generate { background: #0b5f4b; }
+    .panel.active .fab { display: inline-flex; }
+    .fab .fab-icon {
+      font-size: 1.15rem;
+      line-height: 1;
+    }
+    #panel-entry.panel.active,
+    #panel-preview.panel.active {
+      padding-bottom: 5.5rem;
+    }
 
     .live-dot {
       width: 8px;
@@ -430,7 +468,7 @@
       margin: 0;
     }
     @media print {
-      nav, .toolbar, .dl-box, .toast, .hero-actions, .preview-tabs, .lead, .validation-bar { display: none !important; }
+      nav, .toolbar, .dl-box, .toast, .hero-actions, .preview-tabs, .lead, .validation-bar, .fab, .gen-mode { display: none !important; }
       .layout { display: block; }
       main { padding: 0; max-width: none; }
       .panel { display: none !important; border: none; box-shadow: none; padding: 0; }
@@ -518,6 +556,9 @@
           <button type="button" class="btn btn-secondary btn-sm" id="btn-goto-preview">View filled forms →</button>
         </div>
         <div class="entry-grid" id="entry-grid"></div>
+        <button type="button" class="fab fab-preview" id="fab-preview" title="Open Live Form Preview">
+          <span class="fab-icon" aria-hidden="true">👁</span> Preview
+        </button>
       </section>
 
       <!-- LIVE PREVIEW -->
@@ -538,6 +579,9 @@
         </div>
         <div class="preview-tabs" id="preview-tabs"></div>
         <div id="preview-body"></div>
+        <button type="button" class="fab fab-generate" id="fab-generate" title="Open Generate Docs">
+          <span class="fab-icon" aria-hidden="true">📄</span> Generate DOCS
+        </button>
       </section>
 
       <!-- GENERATE -->
@@ -1619,6 +1663,8 @@ p{margin:0 0 4px;text-align:justify;}
     });
 
     document.getElementById("btn-goto-preview").addEventListener("click", () => showPanel("preview"));
+    document.getElementById("fab-preview").addEventListener("click", () => showPanel("preview"));
+    document.getElementById("fab-generate").addEventListener("click", () => showPanel("generate"));
     document.getElementById("btn-dl-xlsx").addEventListener("click", downloadExcel);
     const dlGen = document.getElementById("btn-dl-xlsx-gen");
     if (dlGen) dlGen.addEventListener("click", downloadExcel);
